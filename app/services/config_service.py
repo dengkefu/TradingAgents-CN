@@ -989,7 +989,7 @@ class ConfigService:
             elif provider_str == "deepseek":
                 # DeepSeek 使用专门的测试方法
                 logger.info(f"🔍 使用 DeepSeek 专用测试方法")
-                result = self._test_deepseek_api(api_key, f"{provider_str} {llm_config.model_name}", llm_config.model_name)
+                result = self._test_deepseek_api(api_key, f"{provider_str} {llm_config.model_name}", llm_config.model_name, api_base)
                 result["response_time"] = time.time() - start_time
                 return result
             elif provider_str == "dashscope":
@@ -3605,9 +3605,10 @@ class ConfigService:
                 "message": f"{display_name} API测试异常: {str(e)}"
             }
 
-    def _test_deepseek_api(self, api_key: str, display_name: str, model_name: str = None) -> dict:
+    def _test_deepseek_api(self, api_key: str, display_name: str, model_name: str = None, api_base: str = None) -> dict:
         """测试DeepSeek API"""
         try:
+            import os
             import requests
 
             # 如果没有指定模型，使用默认模型
@@ -3617,7 +3618,10 @@ class ConfigService:
 
             logger.info(f"🔍 [DeepSeek 测试] 使用模型: {model_name}")
 
-            url = "https://api.deepseek.com/chat/completions"
+            # 优先使用传入的 api_base，其次读环境变量，最后用默认值
+            base_url = api_base or os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+            base_url = base_url.rstrip("/")
+            url = f"{base_url}/chat/completions"
 
             headers = {
                 "Content-Type": "application/json",

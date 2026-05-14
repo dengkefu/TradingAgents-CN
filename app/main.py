@@ -581,7 +581,17 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        # 关闭时清理
+        # 关闭时清理：取消所有后台异步任务
+        tasks_to_cancel = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        if tasks_to_cancel:
+            logger.info(f"🛑 取消 {len(tasks_to_cancel)} 个后台任务...")
+            for t in tasks_to_cancel:
+                t.cancel()
+            # 等待任务取消完成（超时5秒）
+            done, pending = await asyncio.wait(tasks_to_cancel, timeout=5)
+            if pending:
+                logger.warning(f"⚠️  {len(pending)} 个任务未能在超时内取消")
+
         if scheduler:
             try:
                 scheduler.shutdown(wait=False)
