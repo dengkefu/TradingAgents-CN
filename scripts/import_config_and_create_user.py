@@ -528,6 +528,21 @@ def main():
         type=str,
         help="MongoDB 主机（覆盖 .env 配置）"
     )
+    parser.add_argument(
+        "--mongodb-username",
+        type=str,
+        help="MongoDB 用户名（覆盖 .env 配置）"
+    )
+    parser.add_argument(
+        "--mongodb-password",
+        type=str,
+        help="MongoDB 密码（覆盖 .env 配置）"
+    )
+    parser.add_argument(
+        "--mongodb-database",
+        type=str,
+        help="MongoDB 数据库名（覆盖 .env 配置）"
+    )
 
     args = parser.parse_args()
 
@@ -568,6 +583,12 @@ def main():
         print(f"💡 使用命令行指定的 MongoDB 主机: {args.mongodb_host}")
         # 主机被显式覆盖时，不再复用 .env 里的完整连接串
         env_config['mongodb_connection_string'] = None
+    if args.mongodb_username:
+        env_config['mongodb_username'] = args.mongodb_username
+    if args.mongodb_password:
+        env_config['mongodb_password'] = args.mongodb_password
+    if args.mongodb_database:
+        env_config['mongodb_database'] = args.mongodb_database
 
     # 连接数据库
     use_docker = not args.host  # 默认在 Docker 内运行，除非指定 --host
