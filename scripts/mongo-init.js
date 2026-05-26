@@ -9,8 +9,8 @@ db = db.getSiblingDB('admin');
 // 创建应用用户
 try {
   db.createUser({
-    user: 'tradingagents',
-    pwd: 'tradingagents123',
+    user: 'mongo_MPZ4Zt',
+    pwd: 'mongo_cNaMHh',
     roles: [
       {
         role: 'readWrite',

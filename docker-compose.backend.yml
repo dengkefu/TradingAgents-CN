@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: tradingagents-backend:v1.0.0-preview
+    container_name: tradingagents-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: 1
+      TZ: "Asia/Shanghai"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:8080"
+      DOCKER_CONTAINER: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
