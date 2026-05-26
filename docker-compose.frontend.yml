@@ -6,11 +6,13 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        VITE_API_BASE_URL: "${VITE_API_BASE_URL:-http://localhost:8000}"
+        VITE_API_BASE_URL: ""
     image: tradingagents-frontend:v1.0.0-preview
     container_name: tradingagents-frontend
     ports:
       - "3000:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     logging:
       driver: "json-file"
