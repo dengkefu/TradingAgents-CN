@@ -3619,8 +3619,12 @@ class ConfigService:
             logger.info(f"🔍 [DeepSeek 测试] 使用模型: {model_name}")
 
             # 优先使用传入的 api_base，其次读环境变量，最后用默认值
+            import re
             base_url = api_base or os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
             base_url = base_url.rstrip("/")
+            # 确保 URL 包含 /v1 路径（新版模型要求）
+            if not re.search(r'/v\d+$', base_url):
+                base_url = base_url + "/v1"
             url = f"{base_url}/chat/completions"
 
             headers = {
