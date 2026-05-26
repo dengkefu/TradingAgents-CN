@@ -308,6 +308,9 @@ def connect_mongodb(use_docker: bool = True, config: dict = None) -> MongoClient
     if not mongo_uri:
         # 构建 MongoDB URI
         host = 'mongodb' if use_docker else config['mongodb_host']
+        # 如果命令行显式指定了 host，优先使用
+        if config.get('_cli_host_overridden'):
+            host = config['mongodb_host']
         port = config['mongodb_port']
         username = config['mongodb_username']
         password = config['mongodb_password']
@@ -561,6 +564,7 @@ def main():
         print(f"💡 使用命令行指定的 MongoDB 端口: {args.mongodb_port}")
     if args.mongodb_host:
         env_config['mongodb_host'] = args.mongodb_host
+        env_config['_cli_host_overridden'] = True
         print(f"💡 使用命令行指定的 MongoDB 主机: {args.mongodb_host}")
         # 主机被显式覆盖时，不再复用 .env 里的完整连接串
         env_config['mongodb_connection_string'] = None
