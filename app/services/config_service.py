@@ -3804,14 +3804,19 @@ class ConfigService:
                 "Authorization": f"Bearer {api_key}"
             }
 
+            # 🔧 v4/reasoner 模型默认启用思考模式，会消耗大量 token 在推理上
+            # 导致 max_tokens=50 时 content 为空。禁用思考模式并增加 token 上限。
+            is_thinking_model = any(tag in model_name for tag in ["v4", "reasoner"])
             data = {
-                "model": "gpt-3.5-turbo",
+                "model": model_name,
                 "messages": [
                     {"role": "user", "content": "你好，请简单介绍一下你自己。"}
                 ],
-                "max_tokens": 50,
-                "temperature": 0.1
+                "max_tokens": 512,
+                "temperature": 0.1,
             }
+            if is_thinking_model:
+                data["thinking"] = {"type": "disabled"}
 
             response = requests.post(url, json=data, headers=headers, timeout=10)
 
