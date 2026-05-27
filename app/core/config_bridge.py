@@ -40,11 +40,16 @@ def bridge_config_to_env():
         bridged_count += 1
 
         # 桥接 MongoDB 连接字符串
+        # 🔧 跳过包含 docker-compose 服务主机名 "mongodb" 的旧连接字符串
+        # 避免将残留的旧配置传播到 os.environ，确保后续代码使用 settings.MONGO_URI
         mongodb_conn_str = os.getenv("MONGODB_CONNECTION_STRING")
-        if mongodb_conn_str:
+        if mongodb_conn_str and "@mongodb:" not in mongodb_conn_str:
             os.environ["MONGODB_CONNECTION_STRING"] = mongodb_conn_str
             logger.info(f"  ✓ 桥接 MONGODB_CONNECTION_STRING (长度: {len(mongodb_conn_str)})")
             bridged_count += 1
+        elif mongodb_conn_str and "@mongodb:" in mongodb_conn_str:
+            logger.warning(f"  ⚠️ 跳过残留的 docker-compose MONGODB_CONNECTION_STRING，将使用 settings.MONGO_URI")
+            os.environ.pop("MONGODB_CONNECTION_STRING", None)
 
         # 桥接 MongoDB 数据库名称
         from app.core.config import settings
@@ -234,15 +239,18 @@ def bridge_config_to_env():
         try:
             from tradingagents.config.config_manager import config_manager
             from tradingagents.config.mongodb_storage import MongoDBStorage
+            from app.core.config import settings
             logger.info("🔄 重新初始化 tradingagents MongoDB 存储...")
 
-            # 调试：检查环境变量
+            # 🔧 使用 settings.MONGO_URI 替代 MONGODB_CONNECTION_STRING 环境变量
+            # settings.MONGO_URI 从 MONGODB_HOST/USERNAME/PASSWORD 等独立字段正确拼装连接串
+            # 避免服务器 .env 中残留的旧 docker-compose MONGODB_CONNECTION_STRING 污染
             use_mongodb = os.getenv("USE_MONGODB_STORAGE", "false")
-            mongodb_conn = os.getenv("MONGODB_CONNECTION_STRING", "未设置")
-            mongodb_db = os.getenv("MONGODB_DATABASE_NAME", "tradingagentscn")
+            mongodb_conn = settings.MONGO_URI
+            mongodb_db = settings.MONGO_DB
             logger.info(f"  📋 USE_MONGODB_STORAGE: {use_mongodb}")
-            logger.info(f"  📋 MONGODB_CONNECTION_STRING: {mongodb_conn[:30]}..." if len(mongodb_conn) > 30 else f"  📋 MONGODB_CONNECTION_STRING: {mongodb_conn}")
-            logger.info(f"  📋 MONGODB_DATABASE_NAME: {mongodb_db}")
+            logger.info(f"  📋 MongoDB URI (from settings): {mongodb_conn[:40]}..." if len(mongodb_conn) > 40 else f"  📋 MongoDB URI (from settings): {mongodb_conn}")
+            logger.info(f"  📋 MongoDB DB (from settings): {mongodb_db}")
 
             # 直接创建 MongoDBStorage 实例，而不是调用 _init_mongodb_storage()
             # 这样可以捕获更详细的错误信息
