@@ -72,6 +72,14 @@ class OpenAIClient(BaseLLMClient):
             if key in self.kwargs:
                 llm_kwargs[key] = self.kwargs[key]
 
+        # DeepSeek v4/reasoner models default to thinking mode.
+        # LangChain does not preserve `reasoning_content` in chat history,
+        # causing "must be passed back to the API" errors on multi-turn calls.
+        # Use extra_body (OpenAI SDK parameter) to disable thinking at the HTTP body level.
+        if self.provider == "deepseek":
+            llm_kwargs.setdefault("model_kwargs", {})
+            llm_kwargs["model_kwargs"]["extra_body"] = {"thinking": {"type": "disabled"}}
+
         return NormalizedChatOpenAI(**llm_kwargs)
 
     def validate_model(self) -> bool:
